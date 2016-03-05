@@ -1,3 +1,9 @@
+#FTC Team 6137 Robowties fork of ftc_app
+We've added:
+
+ * 1 Teleop Program
+ * 4 Autonomous Programs
+
 # ftc_app
 FTC Android Studio project to create FTC Robot Controller app.
 
