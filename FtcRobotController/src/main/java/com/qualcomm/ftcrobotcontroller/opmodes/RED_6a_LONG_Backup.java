@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.util.Range;
 
 /*** Autonomous OpMode - LONG WAY score climbers, drive up mountain, hit zip triggers  */
 
-public class RED_6a_LONG extends OpMode {//Wd 2-24 was Red4m
+public class RED_6a_LONG_Backup extends OpMode {//Wd 2-24 was Red4m
 //Wed 2-24 from Red4m: tuned for Red
 //Tue 2-23 from Blue4m: mirror for Red
 //Tue 2-23 from Blue4k: enum states, try reverse turn at far end
@@ -48,7 +48,6 @@ public class RED_6a_LONG extends OpMode {//Wd 2-24 was Red4m
     AT_FACE_MTN_GO_PREP_CLIMB,
     AT_PREP_CLIMB_GO_CLIMBING,
     AT_CLIMBING_GO_HIT_SLOPE,
-        TURN_TO_CLIMB_ANGLE,
     AT_END_STATE,
 }
 
@@ -328,6 +327,7 @@ public class RED_6a_LONG extends OpMode {//Wd 2-24 was Red4m
                     changeToState(State.AT_WHITE_TAPE_GO_ADJ_PARALLEL);
                 }
                 break;
+
             case AT_WHITE_TAPE_GO_ADJ_PARALLEL://update color sensor reading until stop at white tape, then adjust turn a bit
                 if (senseWhite == 0 && timeInState.time() < maxTime){//black = 0 (not white = 1)
                     senseWhite = sensorColor.alpha();
@@ -388,6 +388,7 @@ public class RED_6a_LONG extends OpMode {//Wd 2-24 was Red4m
 
                 } else {
                     motorLeft.setPower(0); motorRight.setPower(0);
+                    startTurnToHeading(130 * RED_IS_MINUS1, 0.5f);
                     minTime =0f; maxTime = 9.5f;
                     changeToState(State.AT_ADJ_PARALLEL_GO_ARM_ON_BEACON);
                 }
@@ -443,7 +444,6 @@ public class RED_6a_LONG extends OpMode {//Wd 2-24 was Red4m
                     goToPos(motorTurretRotate, targetEncCount, .6);
                     servoBucket.setPosition(BUCKET_LOAD);
                     minTime =0f; maxTime = 5f;
-                    startTurnToHeading(130 * RED_IS_MINUS1, 0.5f);
                     changeToState(State.AT_TURRET0_GO_LOWER_ARM);
                 }
                 break;
@@ -496,7 +496,7 @@ public class RED_6a_LONG extends OpMode {//Wd 2-24 was Red4m
             case AT_HALT_TURN_GO_CLEAR_MTNBASE://go forward to base of mtn
                 telemetry.addData("arm ENC", motorArmUpDown.getCurrentPosition());
                 if (timeInState.time() > minTime){
-                    targetInches = 50;
+                    targetInches = 47;
                     targetEncCount = targetInches * ENCODER_CPI + motorLeft.getCurrentPosition();
                     basePower = 0.85f; deltaPowerMax = 1 - basePower;
                     motorLeft.setPower(basePower); motorRight.setPower(basePower);
@@ -518,7 +518,7 @@ public class RED_6a_LONG extends OpMode {//Wd 2-24 was Red4m
                     motorRight.setPower(basePower + deltaPower);
                 } else {
                     motorLeft.setPower(0); motorRight.setPower(0);
-                    targetInches = -4;
+                    targetInches = -5;
                     targetEncCount = targetInches * ENCODER_CPI + motorLeft.getCurrentPosition();
                     basePower = -0.6f;
                     if (basePower > 0) {deltaPowerMax = 1 - basePower;}
@@ -542,7 +542,7 @@ public class RED_6a_LONG extends OpMode {//Wd 2-24 was Red4m
                     motorRight.setPower(basePower + deltaPower);
                 } else {
                     motorLeft.setPower(0); motorRight.setPower(0);
-                    startTurnToHeading(90 * RED_IS_MINUS1, 0.6f);
+                    startTurnToHeading(90 * RED_IS_MINUS1, 0.7f);
                     motorLeft.setPower(leftPower/.75f);//start turn with full basePower
                     motorRight.setPower(rightPower/.75f);
                     minTime =0f; maxTime = 2f;//need 1.2 sec for turn minimum
@@ -617,7 +617,7 @@ public class RED_6a_LONG extends OpMode {//Wd 2-24 was Red4m
                             servoRedPusher.setPosition(RED_MID);
                             timeTemp.reset();//track pusher time down
                             minTime =0f; maxTime = 9.5f;
-                            changeToState(State.TURN_TO_CLIMB_ANGLE);
+                            changeToState(State.AT_END_STATE);
                         }
 //                        switch (climbState){
 //                            case 0://hit slope, try zip pushers
@@ -669,20 +669,7 @@ public class RED_6a_LONG extends OpMode {//Wd 2-24 was Red4m
                 }
                 break;
 
-            case TURN_TO_CLIMB_ANGLE://
-                maxTime = 1f;
-                if (timeInState.time() < maxTime ) {//if by time, *****
-
-                    motorLeft.setPower(0); motorRight.setPower(0);
-                    startTurnToHeading(30 * RED_IS_MINUS1, 1f);
-
-                }else{
-                    changeToState(State.AT_END_STATE);
-                }
-                break;
-
             case AT_END_STATE://
-                motorLeft.setPower(1); motorRight.setPower(1);
                 telemetry.addData("2", String.format("X %4d   Y %4d   Z %4d",
                         sensorGyro.rawX(), sensorGyro.rawY(), sensorGyro.rawZ()));
                 telemetry.addData("3", String.format("white %2d   red %2d   blue %2d",

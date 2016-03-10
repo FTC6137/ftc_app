@@ -46,6 +46,7 @@ public class FtcOpModeRegister implements OpModeRegister {
 
     manager.register ("Blue 6a LONG", Blue6a_LONG.class);
     manager.register ("Blue 6a short", Blue6a_short.class);
+    manager.register("REDLONGAUTO WOOP", RED_AUTO_LONG.class);
     //manager.register ("Blue 5b short", Blue5b_short.class);
 
     //manager.register("Blue3g SHORT", Blue3g.class);

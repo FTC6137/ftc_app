@@ -47,7 +47,7 @@ public class TeleOp6a extends OpMode {
 
     static final int READY = 0;
     static final int NOT_READY = 1;
-
+ 
     float percent = 70;
     float turretRotato = 0;
     float turretRotatoMiddle = 0;
