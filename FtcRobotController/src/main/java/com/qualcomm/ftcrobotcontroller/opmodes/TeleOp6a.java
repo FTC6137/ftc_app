@@ -8,6 +8,8 @@ import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
+import static android.os.SystemClock.currentThreadTimeMillis;
+
 /**************************************************
  *
  *   Robowties 6137
@@ -47,6 +49,9 @@ public class TeleOp6a extends OpMode {
 
     static final int READY = 0;
     static final int NOT_READY = 1;
+
+    static final int RED = 0;
+    static final int BLUE = 0;
  
     float percent = 70;
     float turretRotato = 0;
@@ -186,7 +191,11 @@ public class TeleOp6a extends OpMode {
 
         //move hang arm to full out position
         if (gamepad2.left_bumper) {
+            double t = currentThreadTimeMillis();
             hangerPosition = HANGER_OUT;
+            if(currentThreadTimeMillis() > t + 500){
+                triggerMode = HALF_DOWN;
+            }
         }
 
         telemetry.addData("hangerPosition", hangerPosition);
@@ -204,12 +213,12 @@ public class TeleOp6a extends OpMode {
 
         //turret rotation control
         if(gamepad2.left_trigger > .9){
-            turretRotatoMiddle = turretRotato;
+            turretRotato = 0;
         }
         turretRotato -= gamepad2.left_stick_x * 20; //changed from 30
         telemetry.addData("ARM UP DOWN", gamepad2.right_stick_y);
         int targetDistred = 100;
-        if(gamepad2.b){
+        if(gamepad2.b){ //red pos
             goToPos(turretUpDown, targetDistred, 1);
             if(turretUpDown.getCurrentPosition() > targetDistred * .8) {
                 turretRotato = turretRotatoMiddle - 4850;
@@ -217,7 +226,7 @@ public class TeleOp6a extends OpMode {
         }
 
         int targetDistblue = 100;
-        if(gamepad2.x){
+        if(gamepad2.x){ //go to blue pos
             goToPos(turretUpDown, targetDistblue, 1);
             if(turretUpDown.getCurrentPosition() > targetDistred * .8) {
                 turretRotato = turretRotatoMiddle + 4850;
@@ -232,7 +241,11 @@ public class TeleOp6a extends OpMode {
 
             if (turretUpDown.getCurrentPosition() > -100) { //deadzone for turret up/down
                 goDistance(turretUpDown, -100 * gamepad2.right_stick_y * Math.abs(gamepad2.right_stick_y), .5);
-            } else turretUpDown.setPower(0);
+            } else{
+                if(Math.abs(turretRotato) < 250) {
+                    turretUpDown.setPower(0);
+                }
+            }
 
         }
 
@@ -250,6 +263,7 @@ public class TeleOp6a extends OpMode {
         }
 
         telemetry.addData("TurretPosition", turretRotato);
+        telemetry.addData("power pct: ", pctFromTarget(turretRotationMotor.getCurrentPosition()));
 
         //push values to motors
         right = Range.clip(right, -1, 1);
@@ -261,8 +275,31 @@ public class TeleOp6a extends OpMode {
         motorRight.setPower(right);
         motorLeft.setPower(left);
         hangWinch.setPower(winchPower);
-        goToPos(turretRotationMotor, turretRotato, 1);
+        goToPos(turretRotationMotor, turretRotato, pctFromTarget(turretRotationMotor.getCurrentPosition()));
         rollerMotor.setPower(rollerSpeed);
+    }
+
+    private double pctFromTarget(int heading){
+//        int targetColor;
+//        if((Math.abs(heading - 4850)) > Math.abs(heading + 4850)){
+//            targetColor = BLUE;
+//        }
+//        else targetColor = RED;
+//
+//        if(targetColor == BLUE){
+//
+//        }
+        double h;
+        if(heading != 0){
+            h = Math.abs(heading);
+        }
+        else h = 1;
+        double pct = .05 + Math.abs((((4850 - h)) / 4850)); // 1 = 100% difference
+        telemetry.addData("raw pct: ", pct);
+        if(pct > 1){
+            pct = 1;
+        }
+        return pct;
     }
 
     double scaleInput(double dVal) {
