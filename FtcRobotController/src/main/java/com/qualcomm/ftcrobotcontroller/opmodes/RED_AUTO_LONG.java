@@ -7,6 +7,9 @@ import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 /**
  * Created by robow_000 on 3/9/2016.
  */
@@ -46,50 +49,38 @@ public class RED_AUTO_LONG extends OpMode{
     }
 
     public void goToPos(DcMotor m, double encCount, double power) {
-        telemetry.addData("Gyro:", sensorGyro.getHeading());
-        m.setTargetPosition((int) encCount);
-        m.setMode(DcMotorController.RunMode.RUN_TO_POSITION);
-        m.setPower(power);
+      if (m.getCurrentPosition() < encCount) {
+            m.setPower(power);
+            telemetry.addData("Pos", m.getCurrentPosition());
+        } else {
+            motorLeft.setPower(0);
+            motorRight.setPower(0);
+        }
     }
 
-    private int adjHeading(int offset){
-        int heading;
-        heading = sensorGyro.getHeading() - offset;
-        if (heading > 180) {heading = heading - 360;}
+    private int adjHeading(int heading){
+        if (heading > 180) {
+            heading = heading - 360;
+        }
         return heading;
     }
 
     public void turnToHeading(int desiredHeading, float desiredPower){
-        //sets targetHeading, deltaHeading, leftPower, rightPower, but NOT basePower
-        //int targetHeading = desiredHeading;
-        //int deltaHeading = desiredHeading - adjHeading(sensorGyro.getHeading());
-        int deltaHeading = 50;
-        double leftPower;
-        double rightPower;
-
-        while (Math.abs(deltaHeading) > 5) {
-            //deltaHeading = desiredHeading - adjHeading(sensorGyro.getHeading());
-            deltaHeading = 50;
-            //basePower = desiredPower;
-
-            if (deltaHeading > 1) {//turn right
-                leftPower = -desiredPower * .75f;
-                rightPower = desiredPower * .75f;
-            } else if (deltaHeading < -1) {//turn left
-                leftPower = desiredPower * .75f;
-                rightPower = -desiredPower * .75f;
-            } else {//already at correct heading
-                leftPower = 0;
-                rightPower = 0;
-            }//setting left & rightPower at 0.75 for slowing the turn as approach desiredHeading
-            motorLeft.setPower(leftPower / 0.75f);
-            motorRight.setPower(rightPower / 0.75f);//start turn with full desiredPower
+        if(adjHeading(desiredHeading) != adjHeading(sensorGyro.getHeading())) {
+            motorLeft.setPower(-.1);
+            motorRight.setPower(.1);
+            telemetry.addData("Heading:", adjHeading(sensorGyro.getHeading()));
+        }else{
+            motorLeft.setPower(0);
+            motorRight.setPower(0);
         }
     }
 
     public double inchesToEncoderTicks(double inches){
         return inches * 120.689655;
     }
+
+
 
     @Override
     public void init() {
@@ -129,7 +120,23 @@ public class RED_AUTO_LONG extends OpMode{
 
     @Override
     public void loop() {
-        motorLeft.setPower(1);
-       // motorRight.setPower(-1);//start turn with full desiredPower
+        motorRight.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
+        motorLeft.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
+        try {
+            Method a = this.getClass().getDeclaredMethod("goToPos", DcMotor.class, double.class, double.class);
+            a.invoke(motorRight, 1000, 1);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+//        goToPos(motorLeft, 1000, 1);
+//        turnToHeading(90, 1);
+    }
+
+    public void start(){
+
     }
 }

@@ -282,7 +282,7 @@ public class PushBotHardware extends OpMode
         //
         // Ensure the values are legal.
         //
-        float l_power = Range.clip (p_power, -1, 1);
+        float l_power = Range.clip (p_power, -.7f, .7f);
 
         float[] l_array =
             { 0.00f, 0.05f, 0.09f, 0.10f, 0.12f

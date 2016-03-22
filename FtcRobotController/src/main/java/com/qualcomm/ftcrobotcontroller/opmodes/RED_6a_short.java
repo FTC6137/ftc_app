@@ -137,6 +137,7 @@ public class RED_6a_short extends OpMode {//Wed 2-24 was Red4o
         m.setTargetPosition((int) encCount);
         m.setMode(DcMotorController.RunMode.RUN_TO_POSITION);
         m.setPower(power);
+
     }
 
     double scaleInput(double dVal) {
@@ -276,7 +277,7 @@ public class RED_6a_short extends OpMode {//Wed 2-24 was Red4o
                 } else {
                     motorLeft.setPower(0); motorRight.setPower(0);
                     targetHeading = -45;
-                    startTurnToHeading(targetHeading * RED_IS_MINUS1, 0.8f);//45
+                    startTurnToHeading(targetHeading * RED_IS_MINUS1, 0.7f);//45 was 0.8
                     minTime =0f; maxTime = 3f;
                     changeToState(State.AT_TURN_PARALLEL_GO_ARM_VERTICAL);
                 }
@@ -476,7 +477,7 @@ public class RED_6a_short extends OpMode {//Wed 2-24 was Red4o
                 if (timeInState.time() > minTime) {
                     if (motorArmUpDown.getCurrentPosition() > targetEncCount) {
                     } else {
-                        startTurnToHeading(155 * RED_IS_MINUS1, 0.8f);//was 160
+                        startTurnToHeading(165 * RED_IS_MINUS1, 0.7f);//was 160    was 0.8
                         minTime = 0f; maxTime = 4.f;
                         changeToState(State.AT_TURN_2MTN_GO_HALT_TURN);
                     }
@@ -524,7 +525,7 @@ public class RED_6a_short extends OpMode {//Wed 2-24 was Red4o
                     motorRight.setPower(basePower + deltaPower);
                 } else {
                     motorLeft.setPower(0); motorRight.setPower(0);
-                    targetInches = -3;
+                    targetInches = -5;
                     targetEncCount = targetInches * ENCODER_CPI + motorLeft.getCurrentPosition();
                     basePower = -0.6f;
                     if (basePower > 0) {deltaPowerMax = 1 - basePower;}

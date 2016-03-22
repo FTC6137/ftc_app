@@ -37,11 +37,11 @@ public class TeleOp6a extends OpMode {
     OpticalDistanceSensor opticalDistance;
 
     static final double DGATE_CLOSE = 0.1, DGATE_OPEN = .45;
-    static final double HANGER_IN = 0.1, HANGER_OUT = 0.9;
-    static final double RED_UP = 0.83, RED_MID = 0.15, RED_DOWN = 0;
-    static final double BLUE_UP = 0.15, BLUE_MID = 0.75, BLUE_DOWN = .9;
+    static final double HANGER_IN = 0.08, HANGER_OUT = 0.9;
+    static final double RED_UP = 0.86, RED_MID = 0.14, RED_DOWN = .04;
+    static final double BLUE_UP = 0.16, BLUE_MID = 0.86, BLUE_DOWN = .96;
     static final double BUMPER_UP = .66, BUMPER_DOWN = .04;
-    static final double BUCKET_LOAD = 0.0, BUCKET_DUMP = 0.63; //change bucket_load to fix problem
+    static final double BUCKET_LOAD = 0.04, BUCKET_DUMP = 0.63; //change bucket_load to fix problem
 
     static final int FULL_DOWN = 0;
     static final int HALF_DOWN = 1;
