@@ -11,21 +11,7 @@ import com.qualcomm.robotcore.util.Range;
 
 /*** Autonomous OpMode - LONG WAY score climbers, drive up mountain, hit zip triggers  */
 
-public class RED_6a_LONG extends OpMode {//Wd 2-24 was Red4m
-//Wed 2-24 from Red4m: tuned for Red
-//Tue 2-23 from Blue4m: mirror for Red
-//Tue 2-23 from Blue4k: enum states, try reverse turn at far end
-//Mon 2-22 from Blue4j, try raise arm after far turn
-//Mon 2-22 from Red4g then Blue4h
-//Sun 2-21 from Red 4f, fix stopped by debris at ziptie
-//Sun 2-21 from Red4e, stop at 90 deg before mtn
-//Sat from Red4d, need turn before climb
-//Fri continue programming: turret secure, climb after
-//copied from Red4a, generic Cases with time limits
-//autonomous using state machine, not LinearOpMode
-//copied from TeleOp4a - clarify program, ID motors, servos, sensors; etc.
-//change servoBucket to underhand
-// use config3 file
+public class RED_6a_LONG extends OpMode {
     
     private enum State {
     AT_START_GO_FAR,
@@ -74,17 +60,17 @@ public class RED_6a_LONG extends OpMode {//Wd 2-24 was Red4m
     ColorSensor sensorColor;
 
     static final int RED_IS_MINUS1 = -1;// +1 IF BLUE, for turns of robot and turret
-    //*** Java assumes DOUBLE PRECISION, must specify FLOAT with #.##f
-    static final float DGATE_CLOSE = 0.078f, DGATE_HOLDCLIMBERS = 0.11f, DGATE_OPEN = .3f;// Debris Gate
-    static final float HANGER_IN = 0.07f, HANGER_OUT = 0.9f;// Hanger Hook
-    static final float RED_UP = 0.83f, RED_MID = 0.15f, RED_DOWN = 0.0f;// Red Pusher Zipline Trigger
-    static final float BLUE_UP = 0.15f, BLUE_MID = 0.75f, BLUE_DOWN = .9f;// Blue Pusher Zipline Trigger
-    static final float BUMPER_UP = .66f, BUMPER_DOWN = .04f;// Back Bumper
-    static final float BUCKET_LOAD = 0.07f, BUCKET_DUMP = 0.63f;// Collector Bucket
-    static final int PUSHER_DOWN = 0, PUSHER_HALF = 1, PUSHER_UP = 2;
-    static final int PUSHER_READY = 0, PUSHER_NOT_READY = 1;
+    static final float  DGATE_HOLDCLIMBERS = ConstantsConfig.DGATE_HOLDCLIMBERS;
+    static final double DGATE_CLOSE = ConstantsConfig.DGATE_CLOSE, DGATE_OPEN = ConstantsConfig.DGATE_OPEN;
+    static final double HANGER_IN = ConstantsConfig.HANGER_IN, HANGER_OUT = ConstantsConfig.HANGER_OUT;
+    static final float RED_UP = ConstantsConfig.RED_UP, RED_MID = ConstantsConfig.RED_MID, RED_DOWN = ConstantsConfig.RED_DOWN;// Red Pusher Zipline Trigger
+    static final float BLUE_UP = ConstantsConfig.BLUE_UP, BLUE_MID = ConstantsConfig.BLUE_MID, BLUE_DOWN = ConstantsConfig.BLUE_DOWN;// Blue Pusher Zipline Trigger
+    static final float BUMPER_UP = ConstantsConfig.BUMPER_UP, BUMPER_DOWN = ConstantsConfig.BUMPER_DOWN;// Back Bumper
+    static final float BUCKET_LOAD = ConstantsConfig.BUCKET_LOAD, BUCKET_DUMP = ConstantsConfig.BUCKET_DUMP;// Collector Bucket
+    static final int PUSHER_DOWN = ConstantsConfig.PUSHER_DOWN, PUSHER_HALF = ConstantsConfig.PUSHER_HALF, PUSHER_UP = ConstantsConfig.PUSHER_UP;
+    static final int PUSHER_READY = ConstantsConfig.PUSHER_READY, PUSHER_NOT_READY = ConstantsConfig.PUSHER_NOT_READY;
+    static final float ENCODER_CPI = ConstantsConfig.ENCODER_CPI;
 
-    static final float ENCODER_CPI = 13617/112;// ~121 counts/inch with Hugo's treads
     float targetInches, targetEncCount, targetFuzzy, oldEncCount;
     int oldHeading, targetHeading, deltaHeading, gyroDrift, wiggleFlag, climbState;
     float currentPower, basePower =0.7f, deltaPower, deltaPowerMax = 1 - basePower;

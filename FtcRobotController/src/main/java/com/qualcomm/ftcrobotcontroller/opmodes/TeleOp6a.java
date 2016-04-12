@@ -10,6 +10,8 @@ import com.qualcomm.robotcore.util.Range;
 
 import static android.os.SystemClock.currentThreadTimeMillis;
 
+
+
 /**************************************************
  *
  *   Robowties 6137
@@ -36,16 +38,16 @@ public class TeleOp6a extends OpMode {
     GyroSensor gyro;
     OpticalDistanceSensor opticalDistance;
 
-    static final double DGATE_CLOSE = 0.1, DGATE_OPEN = .45;
-    static final double HANGER_IN = 0.08, HANGER_OUT = 0.9;
-    static final double RED_UP = 0.86, RED_MID = 0.14, RED_DOWN = .04;
-    static final double BLUE_UP = 0.16, BLUE_MID = 0.86, BLUE_DOWN = .96;
-    static final double BUMPER_UP = .66, BUMPER_DOWN = .04;
-    static final double BUCKET_LOAD = 0.04, BUCKET_DUMP = 0.63; //change bucket_load to fix problem
+    static final double DGATE_CLOSE = ConstantsConfig.DGATE_CLOSE, DGATE_OPEN = ConstantsConfig.DGATE_OPEN;
+    static final double HANGER_IN = ConstantsConfig.HANGER_IN, HANGER_OUT = ConstantsConfig.HANGER_OUT;
+    static final double RED_UP = ConstantsConfig.RED_UP, RED_MID = ConstantsConfig.RED_MID, RED_DOWN = ConstantsConfig.RED_DOWN;
+    static final double BLUE_UP = ConstantsConfig.BLUE_UP, BLUE_MID = ConstantsConfig.BLUE_MID, BLUE_DOWN = ConstantsConfig.BLUE_DOWN;
+    static final double BUMPER_UP = ConstantsConfig.BUMPER_UP, BUMPER_DOWN = ConstantsConfig.BUMPER_DOWN;
+    static final double BUCKET_LOAD = ConstantsConfig.BUCKET_LOAD, BUCKET_DUMP = ConstantsConfig.BUCKET_DUMP; //change bucket_load to fix problem
 
-    static final int FULL_DOWN = 0;
-    static final int HALF_DOWN = 1;
-    static final int UP = 2;
+    static final int FULL_DOWN = ConstantsConfig.FULL_DOWN;
+    static final int HALF_DOWN = ConstantsConfig.HALF_DOWN;
+    static final int UP = ConstantsConfig.UP;
 
     static final int READY = 0;
     static final int NOT_READY = 1;
@@ -76,23 +78,23 @@ public class TeleOp6a extends OpMode {
 
     @Override
     public void init() {
-        rollerMotor = hardwareMap.dcMotor.get("qq1roll");
-        hangWinch = hardwareMap.dcMotor.get("qq2winch");
-        turretRotationMotor = hardwareMap.dcMotor.get("ue1turr");
-        turretUpDown = hardwareMap.dcMotor.get("ue2updn");
-        motorLeft = hardwareMap.dcMotor.get("mo1left");
-        motorRight = hardwareMap.dcMotor.get("mo2right");
+        rollerMotor = hardwareMap.dcMotor.get(ConstantsConfig.rollerMotorName);
+        hangWinch = hardwareMap.dcMotor.get(ConstantsConfig.hangWinchName);
+        turretRotationMotor = hardwareMap.dcMotor.get(ConstantsConfig.turretRotationMotorName);
+        turretUpDown = hardwareMap.dcMotor.get(ConstantsConfig.turretUpDownName);
+        motorLeft = hardwareMap.dcMotor.get(ConstantsConfig.motorLeftName);
+        motorRight = hardwareMap.dcMotor.get(ConstantsConfig.motorRightName);
         motorLeft.setDirection(DcMotor.Direction.REVERSE);
 
-        debrisGate = hardwareMap.servo.get("6gate");
-        hanger = hardwareMap.servo.get("5hang");
-        redTrigger = hardwareMap.servo.get("4red");
-        blueTrigger = hardwareMap.servo.get("3blu");
-        backBumper = hardwareMap.servo.get("2bump");
-        bucketServo = hardwareMap.servo.get("1bkt");
+        debrisGate = hardwareMap.servo.get(ConstantsConfig.debrisGateName);
+        hanger = hardwareMap.servo.get(ConstantsConfig.hangerName);
+        redTrigger = hardwareMap.servo.get(ConstantsConfig.redTriggerName);
+        blueTrigger = hardwareMap.servo.get(ConstantsConfig.blueTriggerName);
+        backBumper = hardwareMap.servo.get(ConstantsConfig.backBumperName);
+        bucketServo = hardwareMap.servo.get(ConstantsConfig.bucketServoName);
 
-        gyro = (GyroSensor) hardwareMap.gyroSensor.get("5gyro");
-        opticalDistance = (OpticalDistanceSensor) hardwareMap.opticalDistanceSensor.get("0od");
+        gyro = (GyroSensor) hardwareMap.gyroSensor.get(ConstantsConfig.gyroName);
+        opticalDistance = (OpticalDistanceSensor) hardwareMap.opticalDistanceSensor.get(ConstantsConfig.opticalDistanceName);
         bucketServo.setPosition(0);
     }
 
@@ -215,7 +217,7 @@ public class TeleOp6a extends OpMode {
         if(gamepad2.left_trigger > .9){
             turretRotato = 0;
         }
-        turretRotato -= gamepad2.left_stick_x * 20; //changed from 30
+        turretRotato -= gamepad2.left_stick_x * 20 * pctFromTarget(turretRotationMotor.getCurrentPosition()); //changed from 30
         telemetry.addData("ARM UP DOWN", gamepad2.right_stick_y);
         int targetDistred = 100;
         if(gamepad2.b){ //red pos
@@ -275,7 +277,7 @@ public class TeleOp6a extends OpMode {
         motorRight.setPower(right);
         motorLeft.setPower(left);
         hangWinch.setPower(winchPower);
-        goToPos(turretRotationMotor, turretRotato, pctFromTarget(turretRotationMotor.getCurrentPosition()));
+        goToPos(turretRotationMotor, turretRotato, 1);
         rollerMotor.setPower(rollerSpeed);
     }
 
@@ -296,6 +298,7 @@ public class TeleOp6a extends OpMode {
         else h = 1;
         double pct = .05 + Math.abs((((4850 - h)) / 4850)); // 1 = 100% difference
         telemetry.addData("raw pct: ", pct);
+        pct += .2;
         if(pct > 1){
             pct = 1;
         }

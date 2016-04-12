@@ -40,15 +40,16 @@ public class FtcOpModeRegister implements OpModeRegister {
   public void register(OpModeManager manager) {
 
    // manager.register ("PushBotTeleop", PushBotTeleop.class);
-    manager.register ("RED_6a short", RED_6a_short.class);
-    manager.register("RED_6a LONG", RED_6a_LONG.class);
+    manager.register ("RED_short", RED_6a_short.class);
+    manager.register("RED_LOOONG", RED_6a_LONG.class);
+    manager.register("RED_Mountain", RedGoToMountain.class);
+    //manager.register("RED_6a LONG", RED_6a_LONG.class);
 
     manager.register("TeleOp6a", TeleOp6a.class);
 
-    manager.register ("Blue 6a LONG", Blue6a_LONG.class);
-    manager.register ("Blue 6a short", Blue6a_short.class);
-    manager.register("REDLONGAUTO WOOP", RED_AUTO_LONG.class);
-
+    manager.register ("BLUE_short", Blue6a_short.class);
+    manager.register ("BLUE_LOOONG", Blue6a_LONG.class);
+    manager.register("BLUE_Mountain", BlueGoToMountain.class);
     //manager.register ("Blue 5b short", Blue5b_short.class);
 
     //manager.register("Blue3g SHORT", Blue3g.class);
