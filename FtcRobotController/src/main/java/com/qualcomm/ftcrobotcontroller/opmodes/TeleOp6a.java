@@ -298,7 +298,7 @@ public class TeleOp6a extends OpMode {
         else h = 1;
         double pct = .05 + Math.abs((((4850 - h)) / 4850)); // 1 = 100% difference
         telemetry.addData("raw pct: ", pct);
-        pct += .2;
+        pct += .25;
         if(pct > 1){
             pct = 1;
         }

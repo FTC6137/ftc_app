@@ -9,9 +9,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-/*** Autonomous OpMode - SHORT WAY score climbers, drive up mountain, hit zip triggers  */
+/*** Autonomous OpMode - LONG WAY score climbers, drive up mountain, hit zip triggers  */
 
-public class RED_6a_short extends OpMode {
+public class RED_7a_LONG extends OpMode {
     
     private enum State {
     AT_START_GO_FAR,
@@ -26,14 +26,15 @@ public class RED_6a_short extends OpMode {
     AT_OPEN_GATE_GO_ARM_VERTICAL,
     AT_ARM_VERTICAL_GO_TURRET0,
     AT_TURRET0_GO_LOWER_ARM,
-    AT_LOWER_ARM_GO_TURN_2MTN,
-    AT_TURN_2MTN_GO_HALT_TURN,
+    AT_LOWER_ARM_GO_STRIGHT_TO_MNT,
+        AT_BASE_GO_TURN_PARALLEL_TO_BASE,
     AT_HALT_TURN_GO_CLEAR_MTNBASE,
     AT_CLEAR_MTNBASE_GO_BACKUP,
     AT_BACKUP_GO_FACE_MTN,
     AT_FACE_MTN_GO_PREP_CLIMB,
     AT_PREP_CLIMB_GO_CLIMBING,
     AT_CLIMBING_GO_HIT_SLOPE,
+        TURN_TO_CLIMB_ANGLE,
     AT_END_STATE,
 }
 
@@ -122,7 +123,6 @@ public class RED_6a_short extends OpMode {
         m.setTargetPosition((int) encCount);
         m.setMode(DcMotorController.RunMode.RUN_TO_POSITION);
         m.setPower(power);
-
     }
 
     double scaleInput(double dVal) {
@@ -209,24 +209,22 @@ public class RED_6a_short extends OpMode {
     {
         telemetry.addData("time",String.format("%4.1f  %4.1f >",
                 timeInRound.time(),timeInState.time())+currentState.toString());
-
         switch (currentState)
         {
             case AT_START_GO_FAR://from start, set target distance and heading, turn on motors
                 if (timeInState.time() > minTime){
-                    targetInches = 88;//85 exactly, but we go further to be safe.
+                    targetInches = 136;//135
                     targetEncCount = targetInches * ENCODER_CPI;
                     targetHeading = 0;
                     basePower =0.85f; deltaPowerMax = 1 - basePower;
                     motorLeft.setPower(basePower); motorRight.setPower(basePower);
-                    minTime =0f; maxTime = 8f;
+                    minTime =0f; maxTime = 9.5f;
                     changeToState(State.AT_FAR_GO_BACKUP);
                 }
                 break;
 
             case AT_FAR_GO_BACKUP://correct heading with gyro, then backup an inch so can freely turn
                 telemetry.addData("Current Heading", adjHeading(gyroDrift));
-                telemetry.addData("Inches",motorLeft.getCurrentPosition()/ENCODER_CPI);
                 if (motorLeft.getCurrentPosition() < targetEncCount &&
                         motorRight.getCurrentPosition() < targetEncCount &&
                         timeInState.time() < maxTime ) {//if by time, prob hit wall, then go State 2
@@ -238,7 +236,7 @@ public class RED_6a_short extends OpMode {
                     motorRight.setPower(basePower + deltaPower);
                 } else {
                     motorLeft.setPower(0); motorRight.setPower(0);
-                    targetInches = -1;//so can freely turn
+                    targetInches = -0.5f;//so can freely turn
                     targetEncCount = targetInches * ENCODER_CPI + motorLeft.getCurrentPosition();
                     //targetHeading = 0;// needs to be same as in previous case
                     basePower = -0.6f;
@@ -246,7 +244,6 @@ public class RED_6a_short extends OpMode {
                     else {deltaPowerMax = -1 - basePower;}
                     motorLeft.setPower(basePower); motorRight.setPower(basePower);
                     minTime =0f; maxTime = .6f;
-                    gyroDrift = 0;//********* correct for initial placement not at 45 degrees
                     changeToState(State.AT_BACKUP_GO_TURN_PARALLEL);
                 }
                 break;
@@ -261,8 +258,7 @@ public class RED_6a_short extends OpMode {
                     motorRight.setPower(basePower + deltaPower);
                 } else {
                     motorLeft.setPower(0); motorRight.setPower(0);
-                    targetHeading = -45;
-                    startTurnToHeading(targetHeading * RED_IS_MINUS1, 0.7f);//45 was 0.8
+                    startTurnToHeading(125 * RED_IS_MINUS1, 0.8f); //125
                     minTime =0f; maxTime = 3f;
                     changeToState(State.AT_TURN_PARALLEL_GO_ARM_VERTICAL);
                 }
@@ -296,7 +292,7 @@ public class RED_6a_short extends OpMode {
                 if (timeInState.time() > minTime){//wait
                     if (motorArmUpDown.getCurrentPosition() < targetEncCount - targetFuzzy){
                     } else {
-                        targetEncCount = -2800 * RED_IS_MINUS1;//was 3000
+                        targetEncCount = 2800 * RED_IS_MINUS1;//was 3000
                         goToPos(motorTurretRotate, targetEncCount, .6);//turn arm to face beacon
                         minTime =1f; maxTime = 3f;
                         changeToState(State.AT_TURRET90_GO_WHITE_TAPE);
@@ -314,23 +310,23 @@ public class RED_6a_short extends OpMode {
                     wiggleFlag = 0;//if stopped by ziptie, then track wiggle process
                     basePower = 0.45f;
                     motorLeft.setPower(basePower); motorRight.setPower(basePower);
-                    minTime =0.5f; maxTime = 2f;//~1.8 sec to hit white tape
+                    minTime =0.5f; maxTime = 2.0f;//~1.8 sec to hit white tape
                     changeToState(State.AT_WHITE_TAPE_GO_ADJ_PARALLEL);
                 }
                 break;
-
             case AT_WHITE_TAPE_GO_ADJ_PARALLEL://update color sensor reading until stop at white tape, then adjust turn a bit
-                if (senseWhite == 0 && timeInState.time() < maxTime){//black = 0 (not white = 1)
+                if (senseWhite < 2.1 && timeInState.time() < maxTime){//black = 0 ; blue/red = 1 ; white > 1
                     senseWhite = sensorColor.alpha();
                     telemetry.addData("color: ", senseWhite);
+
                     // how to handle getting stuck at ziptie
-                    if (timeInState.time() > minTime) {
+                    if (timeInState.time() > maxTime) {
                         telemetry.addData("wiggle", wiggleFlag);
                         switch (wiggleFlag){
                             case 0://looking for no forward movement by Encoder
                                 if (motorLeft.getCurrentPosition() - oldEncCount < 200) {
                                     wiggleFlag = 1;
-                                    //servoRedPusher.setPosition(RED_MID);
+                                    servoRedPusher.setPosition(RED_MID);
                                 }
                                 break;
                             case 1://start turn away from wall and ziptie-blocked debris
@@ -379,8 +375,6 @@ public class RED_6a_short extends OpMode {
 
                 } else {
                     motorLeft.setPower(0); motorRight.setPower(0);
-                    targetHeading = -45;
-                    startTurnToHeading(targetHeading * RED_IS_MINUS1, 0.5f);
                     minTime =0f; maxTime = 9.5f;
                     changeToState(State.AT_ADJ_PARALLEL_GO_ARM_ON_BEACON);
                 }
@@ -452,49 +446,50 @@ public class RED_6a_short extends OpMode {
                 } else {
                     targetEncCount = -200;
                     goToPos(motorArmUpDown, targetEncCount, .4);//arm back down for loading
-                    minTime =.5f; maxTime = 2f;
-                    changeToState(State.AT_LOWER_ARM_GO_TURN_2MTN);
+                    minTime =0f; maxTime = 2f;
+                    changeToState(State.AT_LOWER_ARM_GO_STRIGHT_TO_MNT);
                 }
                 break;
 
-            case AT_LOWER_ARM_GO_TURN_2MTN://when arm down, turn 45 deg to base of mtn
+//TODO Reduce turn to get straight to clear the mountain.
+
+            case AT_LOWER_ARM_GO_STRIGHT_TO_MNT://when arm down, turn 45 deg to base of mtn
                 telemetry.addData("arm ENC", motorArmUpDown.getCurrentPosition());
                 if (timeInState.time() > minTime) {
                     if (motorArmUpDown.getCurrentPosition() > targetEncCount) {
                     } else {
-                        startTurnToHeading(165 * RED_IS_MINUS1, 0.7f);//was 160    was 0.8
-                        minTime = 0f; maxTime = 4.f;
-                        changeToState(State.AT_TURN_2MTN_GO_HALT_TURN);
+                        targetInches = 10f;
+                        targetEncCount = targetInches * ENCODER_CPI + motorLeft.getCurrentPosition();
+                        basePower = 0.85f;
+                        motorLeft.setPower(basePower); motorRight.setPower(basePower);
+                        minTime =0f; maxTime = 3f;
+                        changeToState(State.AT_BASE_GO_TURN_PARALLEL_TO_BASE);
                     }
                 }
                 break;
 
-            case AT_TURN_2MTN_GO_HALT_TURN://when done with turn, stop motors
-                telemetry.addData("arm ENC", motorArmUpDown.getCurrentPosition());
-                telemetry.addData("Heading", adjHeading(gyroDrift));
-                telemetry.addData("delta", deltaHeading);
-                if (Math.abs(deltaHeading) > 2 && timeInState.time() < maxTime) {
-                    deltaHeading = targetHeading - adjHeading(gyroDrift);
-                    if (Math.abs(deltaHeading) < 16) {//reduce power when close
-                        motorLeft.setPower(leftPower); motorRight.setPower(rightPower);
+// TODO fix this turn method, it's not turning... EVERYTING BELOW THIS IS PROB MESSED UP
+            case AT_BASE_GO_TURN_PARALLEL_TO_BASE://turn to get ready to clear bae
+                if (timeInState.time() > minTime) {
+                    if (motorLeft.getCurrentPosition() < targetEncCount) {
+                    } else {
+
+                        startTurnToHeading(125 * RED_IS_MINUS1, 0.8f); //125
+                        minTime =0f; maxTime = 3f;
+                        changeToState(State.AT_HALT_TURN_GO_CLEAR_MTNBASE);
                     }
-                } else {
-                    motorLeft.setPower(0); motorRight.setPower(0);
-                    minTime = 0f; maxTime = 4f;
-                    changeToState(State.AT_HALT_TURN_GO_CLEAR_MTNBASE);
                 }
-                break;
 
             case AT_HALT_TURN_GO_CLEAR_MTNBASE://go forward to base of mtn
                 telemetry.addData("arm ENC", motorArmUpDown.getCurrentPosition());
-                if (timeInState.time() > minTime){
-                    targetInches = 38;
-                    targetEncCount = targetInches * ENCODER_CPI + motorLeft.getCurrentPosition();
-                    basePower = 0.85f; deltaPowerMax = 1 - basePower;
-                    motorLeft.setPower(basePower); motorRight.setPower(basePower);
-                    minTime =0f; maxTime = 4f;
-                    changeToState(State.AT_CLEAR_MTNBASE_GO_BACKUP);
-                }
+
+                targetInches = 10;
+                targetEncCount = targetInches * ENCODER_CPI + motorLeft.getCurrentPosition();
+                basePower = 0.85f; deltaPowerMax = 1 - basePower;
+                motorLeft.setPower(basePower); motorRight.setPower(basePower);
+                minTime =0f; maxTime = 4f;
+               // changeToState(State.AT_CLEAR_MTNBASE_GO_BACKUP);
+
                 break;
 
             case AT_CLEAR_MTNBASE_GO_BACKUP://when clear at base, back up
@@ -510,7 +505,7 @@ public class RED_6a_short extends OpMode {
                     motorRight.setPower(basePower + deltaPower);
                 } else {
                     motorLeft.setPower(0); motorRight.setPower(0);
-                    targetInches = -5;
+                    targetInches = -4;
                     targetEncCount = targetInches * ENCODER_CPI + motorLeft.getCurrentPosition();
                     basePower = -0.6f;
                     if (basePower > 0) {deltaPowerMax = 1 - basePower;}
@@ -534,8 +529,8 @@ public class RED_6a_short extends OpMode {
                     motorRight.setPower(basePower + deltaPower);
                 } else {
                     motorLeft.setPower(0); motorRight.setPower(0);
-                    startTurnToHeading(90 * RED_IS_MINUS1, 0.7f);
-                    motorLeft.setPower(leftPower/.75f);//start turn with full basePower
+                    startTurnToHeading(90 * RED_IS_MINUS1, 0.6f); //45 urned too far
+                    motorLeft.setPower(leftPower / .75f);//start turn with full basePower
                     motorRight.setPower(rightPower/.75f);
                     minTime =0f; maxTime = 2f;//need 1.2 sec for turn minimum
                     changeToState(State.AT_FACE_MTN_GO_PREP_CLIMB);
@@ -557,9 +552,11 @@ public class RED_6a_short extends OpMode {
                     servoBumper.setPosition(BUMPER_UP); servoBucket.setPosition(BUCKET_LOAD);
                     servoRedPusher.setPosition(RED_UP); servoBluePusher.setPosition(BLUE_UP);
                     minTime =0f; maxTime = 2f;
-                    changeToState(State.AT_PREP_CLIMB_GO_CLIMBING);
+                    //changeToState(State.AT_PREP_CLIMB_GO_CLIMBING);
+//TODO :)
                 }
                 break;
+
 
             case AT_PREP_CLIMB_GO_CLIMBING://when stopped after turn and ready for climb, go up!
                 telemetry.addData("2", String.format("X %4d   Y %4d   Z %4d",
@@ -583,7 +580,7 @@ public class RED_6a_short extends OpMode {
                 changeToState(State.AT_CLIMBING_GO_HIT_SLOPE);
                 //}
                 break;
-
+// TODO remember to change the change the switch state back.
             case AT_CLIMBING_GO_HIT_SLOPE://climb up trying to get to targetInches 60 til end of autonomous
                 telemetry.addData("2", String.format("X %4d   Y %4d   Z %4d",
                         sensorGyro.rawX(), sensorGyro.rawY(), sensorGyro.rawZ()));
@@ -610,6 +607,7 @@ public class RED_6a_short extends OpMode {
                             timeTemp.reset();//track pusher time down
                             minTime =0f; maxTime = 9.5f;
                             changeToState(State.AT_END_STATE);
+//                            changeToState(State.TURN_TO_CLIMB_ANGLE);
                         }
 //                        switch (climbState){
 //                            case 0://hit slope, try zip pushers
@@ -661,7 +659,22 @@ public class RED_6a_short extends OpMode {
                 }
                 break;
 
+//TODO This state is iring too early and urning befoer we are eve on the ramp.
+
+            case TURN_TO_CLIMB_ANGLE://
+                maxTime = 1f;
+                if (timeInState.time() < maxTime ) {//if by time, *****
+
+                    motorLeft.setPower(0); motorRight.setPower(0);
+                    startTurnToHeading(30 * RED_IS_MINUS1, 1f);
+
+                }else{
+                    changeToState(State.AT_END_STATE);
+                }
+                break;
+
             case AT_END_STATE://
+                motorLeft.setPower(1); motorRight.setPower(1);
                 telemetry.addData("2", String.format("X %4d   Y %4d   Z %4d",
                         sensorGyro.rawX(), sensorGyro.rawY(), sensorGyro.rawZ()));
                 telemetry.addData("3", String.format("white %2d   red %2d   blue %2d",

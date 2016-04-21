@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 /**
  * Created by robow_000 on 3/22/2016.
  */
-public class BlueGoToMountain extends OpMode{
+public class BlueGoToMountain2 extends OpMode{
     private enum State {
         DRIVE_TO_BASE,
         TURN_TO_MOUNTAIN,
@@ -40,18 +40,19 @@ public class BlueGoToMountain extends OpMode{
     GyroSensor sensorGyro;
     ColorSensor sensorColor;
 
-    static final int RED_IS_MINUS1 = -1;// +1 IF BLUE, for turns of robot and turret
     //*** Java assumes DOUBLE PRECISION, must specify FLOAT with #.##f
-    static final float DGATE_CLOSE = 0.078f, DGATE_HOLDCLIMBERS = 0.11f, DGATE_OPEN = .3f;// Debris Gate
-    static final float HANGER_IN = 0.11f, HANGER_OUT = 0.9f;// Hanger Hook
-    static final float RED_UP = 0.83f, RED_MID = 0.15f, RED_DOWN = 0.0f;// Red Pusher Zipline Trigger
-    static final float BLUE_UP = 0.15f, BLUE_MID = 0.75f, BLUE_DOWN = .9f;// Blue Pusher Zipline Trigger
-    static final float BUMPER_UP = .66f, BUMPER_DOWN = .04f;// Back Bumper
-    static final float BUCKET_LOAD = 0.07f, BUCKET_DUMP = 0.63f;// Collector Bucket
-    static final int PUSHER_DOWN = 0, PUSHER_HALF = 1, PUSHER_UP = 2;
-    static final int PUSHER_READY = 0, PUSHER_NOT_READY = 1;
+    static final int RED_IS_MINUS1 = -1;// +1 IF BLUE, for turns of robot and turret
+    static final float  DGATE_HOLDCLIMBERS = ConstantsConfig.DGATE_HOLDCLIMBERS;
+    static final double DGATE_CLOSE = ConstantsConfig.DGATE_CLOSE, DGATE_OPEN = ConstantsConfig.DGATE_OPEN;
+    static final double HANGER_IN = ConstantsConfig.HANGER_IN, HANGER_OUT = ConstantsConfig.HANGER_OUT;
+    static final float RED_UP = ConstantsConfig.RED_UP, RED_MID = ConstantsConfig.RED_MID, RED_DOWN = ConstantsConfig.RED_DOWN;// Red Pusher Zipline Trigger
+    static final float BLUE_UP = ConstantsConfig.BLUE_UP, BLUE_MID = ConstantsConfig.BLUE_MID, BLUE_DOWN = ConstantsConfig.BLUE_DOWN;// Blue Pusher Zipline Trigger
+    static final float BUMPER_UP = ConstantsConfig.BUMPER_UP, BUMPER_DOWN = ConstantsConfig.BUMPER_DOWN;// Back Bumper
+    static final float BUCKET_LOAD = ConstantsConfig.BUCKET_LOAD, BUCKET_DUMP = ConstantsConfig.BUCKET_DUMP;// Collector Bucket
+    static final int PUSHER_DOWN = ConstantsConfig.PUSHER_DOWN, PUSHER_HALF = ConstantsConfig.PUSHER_HALF, PUSHER_UP = ConstantsConfig.PUSHER_UP;
+    static final int PUSHER_READY = ConstantsConfig.PUSHER_READY, PUSHER_NOT_READY = ConstantsConfig.PUSHER_NOT_READY;
+    static final float ENCODER_CPI = ConstantsConfig.ENCODER_CPI;
 
-    static final float ENCODER_CPI = 77.05f;// ~121 counts/inch with Hugo's treads
     float targetInches, targetEncCount, targetFuzzy, oldEncCount;
     int oldHeading, targetHeading, deltaHeading, gyroDrift, wiggleFlag, climbState;
     float currentPower, basePower =0.7f, deltaPower, deltaPowerMax = 1 - basePower;

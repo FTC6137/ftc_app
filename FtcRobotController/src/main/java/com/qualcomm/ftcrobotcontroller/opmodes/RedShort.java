@@ -7,16 +7,24 @@ import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 /**
  * Created by robow_000 on 3/22/2016.
  */
-public class BlueGoToMountain extends OpMode{
+public class RedShort extends OpMode{
     private enum State {
-        DRIVE_TO_BASE,
-        TURN_TO_MOUNTAIN,
+        MOVE_TO_FAR_SIDE,
+        TURN_TO_WHITE_LINE,
+        MOVE_TO_WHITE_LINE,
+        RAISE_ARM,
+        DUMP_CLIMBERS,
         LOWER_ARM,
-        GO_UP_MOUTAIN
+        MOVE_TO_MOUNTAIN,
+        TURN_TO_MOUNTAIN_BASE,
+        MOVE_TO_MOUNTAIN_BASE,
+        TURN_TO_MOUNTAIN,
+        MOVE_UP_MOUNTAIN
     }
 
     private State currentState;
@@ -89,10 +97,10 @@ public class BlueGoToMountain extends OpMode{
             motorRight.setPower(1);
             motorLeft.setPower(1);
             if(adjHeading(sensorGyro.getHeading()) > desiredHeading){
-                motorRight.setPower(.2);
+                motorRight.setPower(.5);
             }
             if(adjHeading(sensorGyro.getHeading()) < desiredHeading){
-                motorLeft.setPower(.2);
+                motorLeft.setPower(.5);
             }
             return false;
         }else{
@@ -103,17 +111,21 @@ public class BlueGoToMountain extends OpMode{
     }
 
     private Boolean turnToHeading(int heading){
-        if(sensorGyro.getHeading() != heading){
-            if(Math.abs(adjHeading(sensorGyro.getHeading()) - heading) > 40){
-                motorLeft.setPower(-1);
-                motorRight.setPower(1);
-            }else{
-                motorLeft.setPower(-.4);
-                motorRight.setPower(.4);
-            }
-            return false;
+        int adjTargetHeading = adjHeading(heading);
+        int adjCurrentHeading = adjHeading(sensorGyro.getHeading());
+        if(Math.abs(adjCurrentHeading-adjTargetHeading) < 1){
+            return true;
         }
-        return true;
+        double speedModifier = Math.abs(adjCurrentHeading-adjTargetHeading) / 180;
+        speedModifier = Range.clip(speedModifier, .5, 1);
+        if(adjTargetHeading - adjCurrentHeading < 0) {
+            motorRight.setPower(-1 * speedModifier);
+            motorLeft.setPower(speedModifier);
+        }else{
+            motorRight.setPower(speedModifier);
+            motorLeft.setPower(-1 * speedModifier);
+        }
+        return false;
     }
 
     @Override
@@ -182,43 +194,79 @@ public class BlueGoToMountain extends OpMode{
         motorHangWinch.setMode(DcMotorController.RunMode.RESET_ENCODERS);
         gyroDrift = adjHeading(0);//if long wait before Start, gyro may have drift
         timeInRound.reset();
-        changeToState(State.DRIVE_TO_BASE);
+        changeToState(State.MOVE_TO_FAR_SIDE);
     }
 
     @Override
     public void loop() {
+        telemetry.addData("Current State", currentState);
         switch (currentState){
-            case DRIVE_TO_BASE:
-                telemetry.addData("Distace (inches)", motorRight.getCurrentPosition() / ENCODER_CPI);
+            case MOVE_TO_FAR_SIDE:
+                telemetry.addData("Distance (inches)", motorRight.getCurrentPosition() / ENCODER_CPI);
                 telemetry.addData("Current Heading", sensorGyro.getHeading());
-                if(moveDistanceWithHeading(0, 52 * ENCODER_CPI)){
-                    changeToState(State.TURN_TO_MOUNTAIN);
+                if(moveDistanceWithHeading(0, 120 * ENCODER_CPI)){
+                    changeToState(State.TURN_TO_WHITE_LINE);
                 }
-
                 break;
-            case TURN_TO_MOUNTAIN:
+            case TURN_TO_WHITE_LINE:
                 telemetry.addData("Heading",adjHeading(sensorGyro.getHeading()));
-                if(turnToHeading(85)){
-
+                if(turnToHeading(43)){
                     motorLeft.setPower(0);
                     motorRight.setPower(0);
                     motorRight.setMode(DcMotorController.RunMode.RESET_ENCODERS);
                     motorLeft.setMode(DcMotorController.RunMode.RESET_ENCODERS);
                     motorLeft.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
                     motorRight.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-                    changeToState(State.GO_UP_MOUTAIN);
+                    changeToState(State.MOVE_TO_WHITE_LINE);
                 }
                 break;
-            case GO_UP_MOUTAIN:
-                servoBumper.setPosition(1);
-                telemetry.addData("Distace (inches)", motorRight.getCurrentPosition() / ENCODER_CPI);
-                if(motorRight.getCurrentPosition() < (120 * ENCODER_CPI)){
-                    motorRight.setPower(1);
-                    motorLeft.setPower(1);
-                }else{
-                    telemetry.addData("Done", "");
+            case MOVE_TO_WHITE_LINE:
+                telemetry.addData("Color", sensorColor.alpha());
+                if(sensorColor.alpha() == 1){
                     motorRight.setPower(0);
                     motorLeft.setPower(0);
+                    changeToState(State.RAISE_ARM);
+                }else{
+                    motorLeft.setPower(.5);
+                    motorRight.setPower(.5);
+                }
+                break;
+            case RAISE_ARM:
+                telemetry.addData("up down ENC", motorArmUpDown.getCurrentPosition());
+                telemetry.addData("turn ENC", motorTurretRotate.getCurrentPosition());
+                motorArmUpDown.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+                motorTurretRotate.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+                boolean readyToDrop = false;
+                if(motorArmUpDown.getCurrentPosition() < 500){
+                    motorArmUpDown.setPower(1);
+                    readyToDrop = false;
+                }else if(motorArmUpDown.getCurrentPosition() > 500) {
+                    motorArmUpDown.setPower(-.2);
+                    readyToDrop = false;
+                }else{
+                    motorArmUpDown.setPower(0);
+                    readyToDrop = true;
+                }
+                if(motorTurretRotate.getCurrentPosition() < 3000){
+                    motorTurretRotate.setPower(1);
+                    readyToDrop = false;
+                }else{
+                    motorTurretRotate.setPower(0);
+                    readyToDrop = true;
+                }
+                if(readyToDrop){
+                    motorArmUpDown.setPower(-1);
+                    motorTurretRotate.setPower(0);
+                    servoBucket.setPosition(BUCKET_DUMP);
+                    changeToState(State.DUMP_CLIMBERS);
+                }
+                break;
+            case DUMP_CLIMBERS:
+                motorArmUpDown.setPower(0);
+                telemetry.addData("Up Down ENC", motorArmUpDown.getCurrentPosition());
+                if(motorArmUpDown.getCurrentPosition() > 800) {
+                    servoDebrisGate.setPosition(.4);
+                    changeToState(State.LOWER_ARM);
                 }
                 break;
         }
